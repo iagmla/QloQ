@@ -49,9 +49,8 @@ def genBasePrimes(psize):
         b = number.getPrime(psize)
     return p, q, a, b
 
-def keygen():
+def keygen(psize):
     good = 0
-    psize = 512
     while good != 1:
         # Generate base primes
         p, q, a, b = genBasePrimes(psize)
