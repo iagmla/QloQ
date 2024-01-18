@@ -51,29 +51,28 @@ def genBasePrimes(psize):
 
 def keygen(psize):
     good = 0
-    while good != 1:
-        # Generate base primes
-        p, q, a, b = genBasePrimes(psize)
-        n = p * q
-        M = a * b
-        t = ((a - 1) * (b - 1) * (p - 1) * (q - 1))
-        # Generate the public key
+    # Generate base primes
+    p, q, a, b = genBasePrimes(psize)
+    n = p * q
+    M = a * b
+    t = ((a - 1) * (b - 1) * (p - 1) * (q - 1))
+    # Generate the public key
+    pk = (number.getRandomRange(1, t))
+    g = number.GCD(pk, t)
+    while g != 1:
         pk = (number.getRandomRange(1, t))
         g = number.GCD(pk, t)
-        while g != 1:
-            pk = (number.getRandomRange(1, t))
-            g = number.GCD(pk, t)
-            if g == 1:
-                break
-        # Generate the secret key
-        sk = number.inverse(pk, t)
-        if n < M:
-            tmp = M
-            M = n
-            n = M
-        if pk != None:
-            if testencrypt(pk, sk, n, M):
-                good = 1
+        if g == 1:
+            break
+    # Generate the secret key
+    sk = number.inverse(pk, t)
+    if n < M:
+        tmp = M
+        M = n
+        n = M
+    if pk != None:
+        if testencrypt(pk, sk, n, M):
+            good = 1
     return sk, pk, n, M
 
 def oaep_encrypt(m, mod):
