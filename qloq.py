@@ -11,14 +11,14 @@ def decrypt(ctxt, sk, n, M):
     phase1 = pow(ctxt, sk, n)
     return pow(phase1, sk, M)
 
-def sign(ctxt, sk, n, M):
-    phase1 = pow(ctxt, sk, M)
-    return pow(phase1, sk, n)
+def sign(h, sk, n, M):
+    phase1 = pow(h, sk, n)
+    return pow(phase1, sk, M)
 
-def verify(ptxt, ctxt, pk, n, M):
-    phase1 = pow(ptxt, pk, M)
-    x = pow(phase1, pk, n)
-    if x == ctxt:
+def verify(s, h, pk, n, M):
+    phase1 = pow(s, pk, M)
+    phase2 = pow(phase1, pk, n)
+    if phase2 == h:
         return True
     else:
         return False
