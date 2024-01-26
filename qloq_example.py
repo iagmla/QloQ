@@ -1,8 +1,9 @@
 from qloq import keygen, encrypt, decrypt, sign, verify
 from Crypto.Util import number
 
-skA, pkA, nA, MA = keygen(512)
-skB, pkB, nB, MB = keygen(512)
+psize = 64
+skA, pkA, nA, MA = keygen(psize)
+skB, pkB, nB, MB = keygen(psize)
 msg = 65
 ctxt = encrypt(msg, pkB, nB, MB)
 print(ctxt)

@@ -12,8 +12,8 @@ def decrypt(ctxt, sk, n, M):
     return pow(phase1, sk, M)
 
 def sign(h, sk, n, M):
-    phase1 = pow(h, sk, n)
-    return pow(phase1, sk, M)
+    phase1 = pow(h, sk, M)
+    return pow(phase1, sk, n)
 
 def verify(s, h, pk, n, M):
     phase1 = pow(s, pk, M)
