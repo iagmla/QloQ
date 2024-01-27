@@ -1,15 +1,16 @@
 from qloq import keygen, encrypt, decrypt, sign, verify
 from Crypto.Util import number
 
-psize = 128
+psize = 64
 skA, pkA, nA, MA = keygen(psize)
 skB, pkB, nB, MB = keygen(psize)
 msg = 65
-ctxt = encrypt(msg, pkA, nA, MA)
+ctxt = encrypt(msg, pkB, nB, MB)
 print(ctxt)
-ptxt = decrypt(ctxt, skA, nA, MA)
+ptxt = decrypt(ctxt, skB, nB, MB)
 print(ptxt)
 
-s = sign(ctxt, skA, nA, MA)
-v = verify(s, ctxt, pkA, nA, MA)
+msg = 123
+s = sign(msg, skA, nA)
+v = verify(s, msg, pkA, nA)
 print(v) 
