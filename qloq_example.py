@@ -11,6 +11,6 @@ ptxt = decrypt(ctxt, skB, nB, MB)
 print(ptxt)
 
 msg = 123
-s = sign(msg, skA, nA)
-v = verify(s, msg, pkA, nA)
+s = sign(msg, skA, nA, MA)
+v = verify(s, msg, pkA, nA, MA)
 print(v) 
