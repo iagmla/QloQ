@@ -31,8 +31,8 @@ void sign(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
     BN_CTX *bnctx = BN_CTX_new();
     BIGNUM *phase1;
     phase1 = BN_new();
-    BN_mod_exp(phase1, H, ctx->sk, ctx->n, bnctx);
-    BN_mod_exp(S, phase1, ctx->sk, ctx->M, bnctx);
+    BN_mod_exp(phase1, H, ctx->sk, ctx->M, bnctx);
+    BN_mod_exp(S, phase1, ctx->sk, ctx->n, bnctx);
 }
 
 int verify(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
@@ -41,10 +41,8 @@ int verify(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
     BIGNUM *phase2;
     phase1 = BN_new();
     phase2 = BN_new();
-    BN_mod_exp(phase1, S, ctx->pk, ctx->M, bnctx);
-    BN_mod_exp(phase2, phase1, ctx->pk, ctx->n, bnctx);
-    const char *phase2_dec = BN_bn2hex(phase2);
-    printf("phase2: %s\n", phase2_dec);
+    BN_mod_exp(phase1, S, ctx->pk, ctx->n, bnctx);
+    BN_mod_exp(phase2, phase1, ctx->pk, ctx->M, bnctx);
 
     if (BN_cmp(phase2, H) == 0) {
         return 0;
@@ -171,41 +169,99 @@ void pkg_keys(struct qloq_ctx * ctx, char * prefix) {
 int pkg_sk_bytes_count(struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     int sknum = 4;
     int Ssknum = 4;
+    int nnum = 3;
+    int Mnum = 3;
     int skbytes = 1536;
     int Sskbytes = 1536;
+    int nbytes = BN_num_bytes(ctx->n);
+    int Mbytes = BN_num_bytes(ctx->M);
     //int skbytes = BN_num_bytes(ctx->sk);
+    int Snbytes = BN_num_bytes(Sctx->n);
+    int SMbytes = BN_num_bytes(Sctx->M);
     //int Sskbytes = BN_num_bytes(Sctx->n);
-    int total = (sknum + Ssknum + skbytes + Sskbytes);
+    int total = ((nnum * 2) + (nbytes * 2) + (Mnum * 2) + (Mbytes * 2) + sknum + Ssknum + skbytes + Sskbytes);
     return total;
 }
 
 void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *keyblob) {
+    char *nnum[3];
+    char *Mnum[3];
     char *sknum[4];
+    char *Snnum[3];
+    char *SMnum[3];
     char *Ssknum[4];
-    //int skbytes = BN_num_bytes(ctx->sk);
+    int nbytes = 768;
+    sprintf(nnum, "%d", nbytes);
+    int Mbytes = 768;
+    sprintf(Mnum, "%d", Mbytes);
     int skbytes = 1536;
     sprintf(sknum, "%d", skbytes);
+    int Snbytes = 768;
+    sprintf(Snnum, "%d", Snbytes);
+    int SMbytes = 768;
+    sprintf(SMnum, "%d", SMbytes);
     int Sskbytes = 1536;
-    //int Sskbytes = BN_num_bytes(Sctx->sk);
     sprintf(Ssknum, "%d", Sskbytes);
     int tt = atoi(sknum);
-    printf("sknum %d\n", tt);
+    unsigned char n[nbytes];
+    BN_bn2bin(ctx->n, n);
+    unsigned char M[Mbytes];
+    BN_bn2bin(ctx->M, M);
     unsigned char sk[skbytes];
     BN_bn2bin(ctx->sk, sk);
     int Stt = atoi(Ssknum);
-    printf("Sknum %d\n", Stt);
+    unsigned char Sn[Snbytes];
+    BN_bn2bin(Sctx->n, n);
+    unsigned char SM[SMbytes];
+    BN_bn2bin(Sctx->M, SM);
     unsigned char Ssk[Sskbytes];
     BN_bn2bin(Sctx->sk, Ssk);
     int pos = 0;
     int i;
+    unsigned char *_nnum = (unsigned char *)nnum;
+    unsigned char *_Mnum = (unsigned char *)Mnum;
     unsigned char *_sknum = (unsigned char *)sknum;
+    unsigned char *_Snnum = (unsigned char *)Snnum;
+    unsigned char *_SMnum = (unsigned char *)SMnum;
     unsigned char *_Ssknum = (unsigned char *)Ssknum;
+    for (i = 0; i < 3; i++) {
+        keyblob[pos] = _nnum[i];
+        pos += 1;
+    }
+    for (i = 0; i < nbytes; i++) {
+        keyblob[pos] = n[i];
+        pos += 1;
+    }
+    for (i = 0; i < 3; i++) {
+        keyblob[pos] = _Mnum[i];
+        pos += 1;
+    }
+    for (i = 0; i < Mbytes; i++) {
+        keyblob[pos] = M[i];
+        pos += 1;
+    }
     for (i = 0; i < 4; i++) {
         keyblob[pos] = _sknum[i];
         pos += 1;
     }
     for (i = 0; i < skbytes; i++) {
         keyblob[pos] = sk[i];
+        pos += 1;
+    }
+    for (i = 0; i < 3; i++) {
+        keyblob[pos] = _nnum[i];
+        pos += 1;
+    }
+    for (i = 0; i < Snbytes; i++) {
+        keyblob[pos] = Sn[i];
+        pos += 1;
+    }
+    for (i = 0; i < 3; i++) {
+        keyblob[pos] = _SMnum[i];
+        pos += 1;
+    }
+    for (i = 0; i < SMbytes; i++) {
+        keyblob[pos] = SM[i];
         pos += 1;
     }
     for (i = 0; i < 4; i++) {
@@ -300,22 +356,23 @@ void load_skfile(char *filename, struct qloq_ctx * ctx, struct qloq_ctx *Sctx) {
     keyfile = fopen(filename, "rb");
     fread(sknum, 1, sksize, keyfile);
     int skn = atoi(sknum);
-    printf("%d\n", skn);
     unsigned char sk[skn];
     fread(sk, 1, skn, keyfile);
 
     fread(Ssknum, 1, Ssksize, keyfile);
     int Sskn = atoi(Ssknum);
-    printf("%d\n", Sskn);
     unsigned char Ssk[Sskn];
     fread(Ssk, 1, Sskn, keyfile);
 
     fclose(keyfile);
     BN_bin2bn(sk, skn, ctx->sk);
     BN_bin2bn(Ssk, Sskn, Sctx->sk);
-
+/*
+    const char *sk_dec = BN_bn2dec(ctx->sk);
+    printf("sk: %s\n", sk_dec);
     const char *Ssk_dec = BN_bn2dec(Sctx->sk);
     printf("Ssk: %s\n", Ssk_dec);
+*/
 }
 
 void mypad_encrypt(unsigned char * msg, int msglen, unsigned char * X, int mask_bytes, unsigned char *nonce) {
@@ -452,21 +509,16 @@ int keygen(struct qloq_ctx *ctx, int psize) {
             good = 2;
         }
 
-        const char *n_dec2 = BN_bn2dec(ctx->n);
-        printf("n: %s\n", n_dec2);
-        const char *M_dec2 = BN_bn2dec(ctx->M);
-        printf("M: %s\n", M_dec2);
-        printf("break\n");
-
         BN_set_word(tmp0, 123);
         cloak(ctx, ctxt, tmp0);
         decloak(ctx, ptxt, ctxt);
+        sign(ctx, tmp1, ctxt);
 
-        if ((BN_cmp(ptxt, tmp0) == 0) && (good != 2)) {
+        if ((BN_cmp(ptxt, tmp0) == 0) && (good != 2) && (verify(ctx, tmp1, ctxt) == 0)) {
             good = 0;
         }
 }
-/*
+
     const char *n_dec = BN_bn2dec(ctx->n);
     printf("n: %s\n", n_dec);
     const char *M_dec = BN_bn2dec(ctx->M);
@@ -475,7 +527,7 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     printf("pk: %s\n", pk_dec);
     const char *sk_dec = BN_bn2dec(ctx->sk);
     printf("sk: %s\n", sk_dec);
-*/
+
     BN_free(p);
     BN_free(q);
     BN_free(a);
