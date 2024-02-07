@@ -496,16 +496,11 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     BN_free(b);
     BN_free(s);
     BN_free(t);
-    BN_free(C);
-    BN_free(K);
-    BN_free(G);
     BN_free(tmp0);
     BN_free(tmp1);
     BN_free(tmp2);
     BN_free(tmp3);
     BN_free(tmp4);
-    BN_free(rtmp0);
-    BN_free(rtmp1);
     BN_free(ctxt);
     BN_free(ptxt);
     BN_free(z1);
