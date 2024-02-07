@@ -171,14 +171,12 @@ int pkg_sk_bytes_count(struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     int Ssknum = 4;
     int nnum = 3;
     int Mnum = 3;
-    int skbytes = 1536;
-    int Sskbytes = 1536;
     int nbytes = BN_num_bytes(ctx->n);
     int Mbytes = BN_num_bytes(ctx->M);
-    //int skbytes = BN_num_bytes(ctx->sk);
+    int skbytes = BN_num_bytes(ctx->sk);
     int Snbytes = BN_num_bytes(Sctx->n);
     int SMbytes = BN_num_bytes(Sctx->M);
-    //int Sskbytes = BN_num_bytes(Sctx->n);
+    int Sskbytes = BN_num_bytes(Sctx->sk);
     int total = ((nnum * 2) + (nbytes * 2) + (Mnum * 2) + (Mbytes * 2) + sknum + Ssknum + skbytes + Sskbytes);
     return total;
 }
@@ -190,26 +188,24 @@ void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *k
     char *Snnum[3];
     char *SMnum[3];
     char *Ssknum[4];
-    int nbytes = 768;
+    int nbytes = BN_num_bytes(ctx->n);
     sprintf(nnum, "%d", nbytes);
-    int Mbytes = 768;
+    int Mbytes = BN_num_bytes(ctx->M);
     sprintf(Mnum, "%d", Mbytes);
-    int skbytes = 1536;
+    int skbytes = BN_num_bytes(ctx->sk);
     sprintf(sknum, "%d", skbytes);
-    int Snbytes = 768;
+    int Snbytes = BN_num_bytes(Sctx->n);
     sprintf(Snnum, "%d", Snbytes);
-    int SMbytes = 768;
+    int SMbytes = BN_num_bytes(Sctx->M);
     sprintf(SMnum, "%d", SMbytes);
-    int Sskbytes = 1536;
+    int Sskbytes = BN_num_bytes(Sctx->sk);
     sprintf(Ssknum, "%d", Sskbytes);
-    int tt = atoi(sknum);
     unsigned char n[nbytes];
     BN_bn2bin(ctx->n, n);
     unsigned char M[Mbytes];
     BN_bn2bin(ctx->M, M);
     unsigned char sk[skbytes];
     BN_bn2bin(ctx->sk, sk);
-    int Stt = atoi(Ssknum);
     unsigned char Sn[Snbytes];
     BN_bn2bin(Sctx->n, n);
     unsigned char SM[SMbytes];
@@ -406,16 +402,11 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     BIGNUM *b;
     BIGNUM *s;
     BIGNUM *t;
-    BIGNUM *C;
-    BIGNUM *K;
-    BIGNUM *G;
     BIGNUM *tmp0;
     BIGNUM *tmp1;
     BIGNUM *tmp2;
     BIGNUM *tmp3;
     BIGNUM *tmp4;
-    BIGNUM *rtmp0;
-    BIGNUM *rtmp1;
     BIGNUM *ptxt;
     BIGNUM *ctxt;
     BIGNUM *z1;
@@ -425,16 +416,11 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     b = BN_new();
     s = BN_new();
     t = BN_new();
-    C = BN_new();
-    K = BN_new();
-    G = BN_new();
     tmp0 = BN_new();
     tmp1 = BN_new();
     tmp2 = BN_new();
     tmp3 = BN_new();
     tmp4 = BN_new();
-    rtmp0 = BN_new();
-    rtmp1 = BN_new();
     ctxt = BN_new();
     ptxt = BN_new();
     z1 = BN_new();
@@ -456,33 +442,9 @@ int keygen(struct qloq_ctx *ctx, int psize) {
         }
 
         int p_result = BN_generate_prime_ex2(p, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_is_prime_ex(p, BN_prime_checks, NULL, NULL) != 1)) {
-        //    BN_generate_prime_ex2(p, psize, 0, NULL, NULL, NULL, bnctx);
-        //}
-        //BN_generate_prime_ex2(q, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_cmp(p, q) == 0) && (BN_is_prime_ex(q, BN_prime_checks, NULL, NULL) != 1)) {
         int q_result = BN_generate_prime_ex2(q, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_is_prime_ex(q, BN_prime_checks, NULL, NULL) != 1)) {
-        //    int q_result = BN_generate_prime_ex2(q, psize, 0, NULL, NULL, NULL, bnctx);
-        //}
         int a_result = BN_generate_prime_ex2(a, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_is_prime_ex(a, BN_prime_checks, NULL, NULL) != 1)) {
-        //    int a_result = BN_generate_prime_ex2(a, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_cmp(a, q) == 0) && (BN_cmp(a, p) == 0)) {
-        //    BN_generate_prime_ex2(a, psize, 0, NULL, NULL, NULL, bnctx);
-        //}
         int b_result = BN_generate_prime_ex2(b, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_is_prime_ex(b, BN_prime_checks, NULL, NULL) != 1)) {
-        //    int a_result = BN_generate_prime_ex2(b, psize, 0, NULL, NULL, NULL, bnctx);
-        //while ((BN_cmp(b, q) == 0) && (BN_cmp(b, p) == 0) && (BN_cmp(b, a) == 0)) {
-        //BN_generate_prime_ex2(b, psize, 0, NULL, NULL, NULL, bnctx);
-        //}
-
-        // Uncomment to test
-        //BN_set_word(p, 137);
-        //BN_set_word(q, 179);
-        //BN_set_word(a, 173);
-        //BN_set_word(b, 181);
         /* Generate the modulus */
         BN_mul(ctx->n, p, q, bnctx);
         /* Generate the mask */
@@ -518,7 +480,7 @@ int keygen(struct qloq_ctx *ctx, int psize) {
             good = 0;
         }
 }
-
+/*
     const char *n_dec = BN_bn2dec(ctx->n);
     printf("n: %s\n", n_dec);
     const char *M_dec = BN_bn2dec(ctx->M);
@@ -527,7 +489,7 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     printf("pk: %s\n", pk_dec);
     const char *sk_dec = BN_bn2dec(ctx->sk);
     printf("sk: %s\n", sk_dec);
-
+*/
     BN_free(p);
     BN_free(q);
     BN_free(a);
