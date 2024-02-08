@@ -103,22 +103,56 @@ void pkg_pk(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, char * prefix) {
     fclose(pkfile);
 }
 
-void pkg_sk(struct qloq_ctx * ctx, char * prefix) {
+void pkg_sk(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, char * prefix) {
     char *skfilename[256];
     char *sknum[4];
-    FILE *tmpfile;
+    char *nnum[3];
+    char *Mnum[3];
+    char *Ssknum[4];
+    char *Snnum[3];
+    char *SMnum[3];
+    FILE *skfile;
     strcpy(skfilename, prefix);
     strcat(skfilename, ".sk");
     int skbytes = BN_num_bytes(ctx->sk);
+    int nbytes = BN_num_bytes(ctx->n);
+    int Mbytes = BN_num_bytes(ctx->M);
+    int Sskbytes = BN_num_bytes(Sctx->sk);
+    int Snbytes = BN_num_bytes(Sctx->n);
+    int SMbytes = BN_num_bytes(Sctx->M);
     sprintf(sknum, "%d", skbytes);
+    sprintf(nnum, "%d", nbytes);
+    sprintf(Mnum, "%d", Mbytes);
+    sprintf(Ssknum, "%d", Sskbytes);
+    sprintf(Snnum, "%d", Snbytes);
+    sprintf(SMnum, "%d", SMbytes);
     unsigned char *sk[skbytes];
+    unsigned char *n[nbytes];
+    unsigned char *M[Mbytes];
+    unsigned char *Ssk[Sskbytes];
+    unsigned char *Sn[Snbytes];
+    unsigned char *SM[SMbytes];
     BN_bn2bin(ctx->sk, sk);
-    tmpfile = fopen(skfilename, "wb");
-    fwrite(sknum, 1, strlen(sknum), tmpfile);
-    fwrite(sk, 1, skbytes, tmpfile);
-    fclose(tmpfile);
+    BN_bn2bin(ctx->n, n);
+    BN_bn2bin(ctx->M, M);
+    BN_bn2bin(Sctx->sk, Ssk);
+    BN_bn2bin(Sctx->n, Sn);
+    BN_bn2bin(Sctx->M, SM);
+    skfile = fopen(skfilename, "wb");
+    fwrite(sknum, 1, strlen(sknum), skfile);
+    fwrite(sk, 1, skbytes, skfile);
+    fwrite(nnum, 1, strlen(nnum), skfile);
+    fwrite(n, 1, nbytes, skfile);
+    fwrite(Mnum, 1, strlen(Mnum), skfile);
+    fwrite(M, 1, Mbytes, skfile);
+    fwrite(sknum, 1, strlen(sknum), skfile);
+    fwrite(Ssk, 1, Sskbytes, skfile);
+    fwrite(Snnum, 1, strlen(Snnum), skfile);
+    fwrite(Sn, 1, Snbytes, skfile);
+    fwrite(SMnum, 1, strlen(SMnum), skfile);
+    fwrite(SM, 1, SMbytes, skfile);
+    fclose(skfile);
 }
-
 
 void pkg_keys(struct qloq_ctx * ctx, char * prefix) {
     char pkfilename[256];
@@ -324,7 +358,7 @@ void load_pkfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     BN_bin2bn(Spk, Spkn, Sctx->pk);
     BN_bin2bn(Sn, Snn, Sctx->n);
     BN_bin2bn(SM, SMn, Sctx->M);
-/*
+
     const char *n_dec = BN_bn2dec(ctx->n);
     printf("n: %s\n", n_dec);
     const char *M_dec = BN_bn2dec(ctx->M);
@@ -338,38 +372,81 @@ void load_pkfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     printf("M: %s\n", M_dec2);
     const char *pk_dec2 = BN_bn2dec(Sctx->pk);
     printf("pk: %s\n", pk_dec2);
-*/
+
 }
 
-void load_skfile(char *filename, struct qloq_ctx * ctx, struct qloq_ctx *Sctx) {
+void load_skfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     ctx->sk = BN_new();
+    ctx->n = BN_new();
+    ctx->M = BN_new();
     Sctx->sk = BN_new();
+    Sctx->n = BN_new();
+    Sctx->M = BN_new();
     int sksize = 4;
+    int nsize = 3;
+    int Msize = 3;
     int Ssksize = 4;
-    unsigned char sknum[sksize];
-    unsigned char Ssknum[Ssksize];
+    int Snsize = 3;
+    int SMsize = 3;
+    unsigned char *sknum[sksize];
+    unsigned char *nnum[nsize];
+    unsigned char *Mnum[nsize];
+    unsigned char *Ssknum[sksize];
+    unsigned char *Snnum[nsize];
+    unsigned char *SMnum[nsize];
     FILE *keyfile;
     keyfile = fopen(filename, "rb");
     fread(sknum, 1, sksize, keyfile);
     int skn = atoi(sknum);
     unsigned char sk[skn];
     fread(sk, 1, skn, keyfile);
+    fread(nnum, 1, nsize, keyfile);
+    int nn = atoi(nnum);
+    unsigned char n[nn];
+    fread(n, 1, nn, keyfile);
+    fread(Mnum, 1, Msize, keyfile);
+    int Mn = atoi(Mnum);
+    unsigned char M[Mn];
+    fread(M, 1, Mn, keyfile);
 
     fread(Ssknum, 1, Ssksize, keyfile);
     int Sskn = atoi(Ssknum);
     unsigned char Ssk[Sskn];
     fread(Ssk, 1, Sskn, keyfile);
+    fread(Snnum, 1, Snsize, keyfile);
+    int Snn = atoi(Snnum);
+    unsigned char Sn[Snn];
+    fread(Sn, 1, Snn, keyfile);
+    fread(SMnum, 1, SMsize, keyfile);
+    int SMn = atoi(SMnum);
+    unsigned char SM[SMn];
+    fread(SM, 1, SMn, keyfile);
 
     fclose(keyfile);
     BN_bin2bn(sk, skn, ctx->sk);
+    BN_bin2bn(n, nn, ctx->n);
+    BN_bin2bn(M, Mn, ctx->M);
     BN_bin2bn(Ssk, Sskn, Sctx->sk);
-/*
+    BN_bin2bn(Sn, Snn, Sctx->n);
+    BN_bin2bn(SM, SMn, Sctx->M);
+
+    const char *n_dec = BN_bn2dec(ctx->n);
+    printf("n: %s\n", n_dec);
+    const char *M_dec = BN_bn2dec(ctx->M);
+    printf("M: %s\n", M_dec);
     const char *sk_dec = BN_bn2dec(ctx->sk);
-    printf("sk: %s\n", sk_dec);
-    const char *Ssk_dec = BN_bn2dec(Sctx->sk);
-    printf("Ssk: %s\n", Ssk_dec);
-*/
+    printf("pk: %s\n", sk_dec);
+
+    const char *n_dec2 = BN_bn2dec(Sctx->n);
+    printf("n: %s\n", n_dec2);
+    const char *M_dec2 = BN_bn2dec(Sctx->M);
+    printf("M: %s\n", M_dec2);
+    const char *sk_dec2 = BN_bn2dec(Sctx->sk);
+    printf("pk: %s\n", sk_dec2);
+
 }
+
+
 
 void mypad_encrypt(unsigned char * msg, int msglen, unsigned char * X, int mask_bytes, unsigned char *nonce) {
     unsigned char tmp[mask_bytes];
@@ -405,8 +482,8 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     BIGNUM *tmp0;
     BIGNUM *tmp1;
     BIGNUM *tmp2;
-    BIGNUM *tmp3;
-    BIGNUM *tmp4;
+    BIGNUM *rtmp0;
+    BIGNUM *rtmp1;
     BIGNUM *ptxt;
     BIGNUM *ctxt;
     BIGNUM *z1;
@@ -419,8 +496,6 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     tmp0 = BN_new();
     tmp1 = BN_new();
     tmp2 = BN_new();
-    tmp3 = BN_new();
-    tmp4 = BN_new();
     ctxt = BN_new();
     ptxt = BN_new();
     z1 = BN_new();
@@ -480,7 +555,7 @@ int keygen(struct qloq_ctx *ctx, int psize) {
             good = 0;
         }
 }
-/*
+
     const char *n_dec = BN_bn2dec(ctx->n);
     printf("n: %s\n", n_dec);
     const char *M_dec = BN_bn2dec(ctx->M);
@@ -489,7 +564,7 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     printf("pk: %s\n", pk_dec);
     const char *sk_dec = BN_bn2dec(ctx->sk);
     printf("sk: %s\n", sk_dec);
-*/
+
     BN_free(p);
     BN_free(q);
     BN_free(a);
@@ -499,8 +574,6 @@ int keygen(struct qloq_ctx *ctx, int psize) {
     BN_free(tmp0);
     BN_free(tmp1);
     BN_free(tmp2);
-    BN_free(tmp3);
-    BN_free(tmp4);
     BN_free(ctxt);
     BN_free(ptxt);
     BN_free(z1);
