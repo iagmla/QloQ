@@ -254,6 +254,14 @@ void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *k
     unsigned char *_Snnum = (unsigned char *)Snnum;
     unsigned char *_SMnum = (unsigned char *)SMnum;
     unsigned char *_Ssknum = (unsigned char *)Ssknum;
+    for (i = 0; i < 4; i++) {
+        keyblob[pos] = _sknum[i];
+        pos += 1;
+    }
+    for (i = 0; i < skbytes; i++) {
+        keyblob[pos] = sk[i];
+        pos += 1;
+    }
     for (i = 0; i < 3; i++) {
         keyblob[pos] = _nnum[i];
         pos += 1;
@@ -271,15 +279,15 @@ void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *k
         pos += 1;
     }
     for (i = 0; i < 4; i++) {
-        keyblob[pos] = _sknum[i];
+        keyblob[pos] = _Ssknum[i];
         pos += 1;
     }
-    for (i = 0; i < skbytes; i++) {
-        keyblob[pos] = sk[i];
+    for (i = 0; i < Sskbytes; i++) {
+        keyblob[pos] = Ssk[i];
         pos += 1;
     }
     for (i = 0; i < 3; i++) {
-        keyblob[pos] = _nnum[i];
+        keyblob[pos] = _Snnum[i];
         pos += 1;
     }
     for (i = 0; i < Snbytes; i++) {
@@ -292,14 +300,6 @@ void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *k
     }
     for (i = 0; i < SMbytes; i++) {
         keyblob[pos] = SM[i];
-        pos += 1;
-    }
-    for (i = 0; i < 4; i++) {
-        keyblob[pos] = _Ssknum[i];
-        pos += 1;
-    }
-    for (i = 0; i < Sskbytes; i++) {
-        keyblob[pos] = Ssk[i];
         pos += 1;
     }
 }
